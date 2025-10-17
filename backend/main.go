@@ -4,7 +4,6 @@ import (
 	"log"
 	"nas-os/backend/handlers"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -68,24 +67,45 @@ func main() {
 	// API routes
 	api := r.Group("/api/v1")
 	{
-		// System monitoring
-		api.GET("/system", getSystemInfo)
-		api.GET("/health", healthCheck)
-		
-		// File management
-		api.GET("/files", handlers.GetFiles)
-		api.POST("/files/upload", handlers.UploadFile)
-		api.GET("/files/download", handlers.DownloadFile)
-		api.DELETE("/files", handlers.DeleteFile)
-		api.POST("/files/folder", handlers.CreateFolder)
-		
-		// Samba file sharing
-		api.GET("/samba/shares", handlers.GetSambaShares)
-		api.POST("/samba/shares", handlers.CreateSambaShare)
-		api.DELETE("/samba/shares/:name", handlers.DeleteSambaShare)
-		api.POST("/samba/start", handlers.StartSambaService)
-		api.POST("/samba/stop", handlers.StopSambaService)
-		api.GET("/samba/status", handlers.GetSambaStatus)
+		// Authentication routes
+		auth := api.Group("/auth")
+		{
+			auth.POST("/login", handlers.Login)
+			auth.POST("/logout", handlers.Logout)
+		}
+
+		// Protected routes (require authentication)
+		protected := api.Group("/")
+		protected.Use(handlers.AuthMiddleware())
+		{
+			// User management
+			protected.GET("/user", handlers.GetCurrentUser)
+			protected.GET("/users", handlers.GetUsers)
+			protected.POST("/users", handlers.CreateUser)
+			protected.DELETE("/users/:username", handlers.DeleteUser)
+
+			// System monitoring
+			protected.GET("/system", getSystemInfo)
+			protected.GET("/health", healthCheck)
+
+			// File management
+			protected.GET("/files", handlers.GetFiles)
+			protected.POST("/files/upload", handlers.UploadFile)
+			protected.GET("/files/download", handlers.DownloadFile)
+			protected.DELETE("/files", handlers.DeleteFile)
+			protected.POST("/files/folder", handlers.CreateFolder)
+
+			// Samba routes
+			protected.GET("/samba/shares", handlers.GetSambaShares)
+			protected.POST("/samba/shares", handlers.CreateSambaShare)
+			protected.DELETE("/samba/shares/:name", handlers.DeleteSambaShare)
+			protected.POST("/samba/start", handlers.StartSambaService)
+			protected.POST("/samba/stop", handlers.StopSambaService)
+			protected.GET("/samba/status", handlers.GetSambaStatus)
+
+			// Network management
+			protected.GET("/network", handlers.GetNetworkConfig)
+		}
 	}
 
 	log.Println("🚀 NAS OS Backend starting on :8080")

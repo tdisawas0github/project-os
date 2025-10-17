@@ -10,11 +10,16 @@ import {
   Users,
   FolderOpen,
   Files,
-  Share2
+  Share2,
+  LogOut
 } from 'lucide-react';
 import axios from 'axios';
 import FileManager from './components/FileManager';
 import SambaManager from './components/SambaManager';
+import UserManager from './components/UserManager';
+import LoginForm from './components/LoginForm';
+import NetworkManager from './components/NetworkManager';
+import { useAuth } from './hooks/useAuth';
 
 interface SystemInfo {
   cpu: {
@@ -46,30 +51,78 @@ interface SystemInfo {
 }
 
 function App() {
+  const { user, isAuthenticated, loading: authLoading, login, logout } = useAuth();
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginLoading, setLoginLoading] = useState(false)
 
   useEffect(() => {
     const fetchSystemInfo = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/v1/system')
-        setSystemInfo(response.data)
-        setError(null)
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:8080/api/v1/system', {
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        setSystemInfo(response.data);
+        setError(null);
       } catch (err) {
-        setError('Failed to connect to NAS OS backend')
-        console.error('Error fetching system info:', err)
+        setError('Failed to connect to NAS OS backend');
+        console.error('Error fetching system info:', err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchSystemInfo()
-    const interval = setInterval(fetchSystemInfo, 5000) // Update every 5 seconds
+    if (isAuthenticated) {
+      fetchSystemInfo()
+      const interval = setInterval(fetchSystemInfo, 5000) // Update every 5 seconds
 
-    return () => clearInterval(interval)
-  }, [])
+      return () => clearInterval(interval)
+    }
+  }, [isAuthenticated])
+
+  const handleLogin = async (username: string, password: string) => {
+    setLoginLoading(true);
+    setLoginError(null);
+    
+    try {
+      await login(username, password);
+    } catch (error: any) {
+      setLoginError(error.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setActiveTab('dashboard');
+  };
+
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading... 🔄</div>
+      </div>
+    );
+  }
+
+  // Show login form if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900">
+        <LoginForm 
+          onLogin={handleLogin}
+          error={loginError || undefined}
+          loading={loginLoading}
+        />
+      </div>
+    );
+  }
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -132,7 +185,16 @@ function App() {
               <Activity className="w-4 h-4 text-green-500" />
               <span>Online</span>
             </div>
-            <Settings className="w-6 h-6 text-slate-400 hover:text-white cursor-pointer" />
+            <div className="flex items-center space-x-2 text-sm text-slate-300">
+              <span>Welcome, {user?.username}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-3 py-1 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </header>
@@ -337,20 +399,8 @@ function App() {
 
         {activeTab === 'files' && <FileManager />}
         {activeTab === 'sharing' && <SambaManager />}
-        {activeTab === 'users' && (
-          <div className="text-center py-12">
-            <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-2xl font-bold text-white mb-2">User Management</h2>
-            <p className="text-gray-400">Coming soon - User account management and permissions</p>
-          </div>
-        )}
-        {activeTab === 'network' && (
-          <div className="text-center py-12">
-            <Wifi className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-2xl font-bold text-white mb-2">Network Configuration</h2>
-            <p className="text-gray-400">Coming soon - Network settings and monitoring</p>
-          </div>
-        )}
+        {activeTab === 'users' && <UserManager />}
+        {activeTab === 'network' && <NetworkManager />}
       </main>
     </div>
   )
