@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"nas-os/backend/handlers"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -66,8 +68,24 @@ func main() {
 	// API routes
 	api := r.Group("/api/v1")
 	{
+		// System monitoring
 		api.GET("/system", getSystemInfo)
 		api.GET("/health", healthCheck)
+		
+		// File management
+		api.GET("/files", handlers.GetFiles)
+		api.POST("/files/upload", handlers.UploadFile)
+		api.GET("/files/download", handlers.DownloadFile)
+		api.DELETE("/files", handlers.DeleteFile)
+		api.POST("/files/folder", handlers.CreateFolder)
+		
+		// Samba file sharing
+		api.GET("/samba/shares", handlers.GetSambaShares)
+		api.POST("/samba/shares", handlers.CreateSambaShare)
+		api.DELETE("/samba/shares/:name", handlers.DeleteSambaShare)
+		api.POST("/samba/start", handlers.StartSambaService)
+		api.POST("/samba/stop", handlers.StopSambaService)
+		api.GET("/samba/status", handlers.GetSambaStatus)
 	}
 
 	log.Println("🚀 NAS OS Backend starting on :8080")
