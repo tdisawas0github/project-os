@@ -26,6 +26,7 @@ import {
   Square
 } from 'lucide-react';
 import axios from 'axios';
+import { Badge } from '@/components/ui/badge';
 
 interface SambaShare {
   name: string;
@@ -278,11 +279,14 @@ const SambaManager: React.FC = () => {
           <div className="flex items-center space-x-2">
             {status.installed ? (
               <div className="flex items-center space-x-4">
-                <div className={`flex items-center space-x-2 ${getStatusColor(status.running)}`}>
+                <div className="flex items-center space-x-2">
                   {getStatusIcon(status.running)}
-                  <span className="font-medium">
+                  <Badge 
+                    variant={status.running ? "default" : "secondary"}
+                    className={status.running ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}
+                  >
                     {status.running ? 'Running' : 'Stopped'}
-                  </span>
+                  </Badge>
                 </div>
                 {status.running ? (
                   <button

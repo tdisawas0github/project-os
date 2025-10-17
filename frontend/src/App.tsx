@@ -21,6 +21,8 @@ import UserManager from './components/UserManager';
 import LoginForm from './components/LoginForm';
 import NetworkManager from './components/NetworkManager';
 import { useAuth } from './hooks/useAuth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface SystemInfo {
   cpu: {
@@ -248,130 +250,147 @@ function App() {
             {/* System Overview */}
             <div className="grid-modern">
               {/* CPU Card */}
-              <div className="card-hover group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30 group-hover:scale-110 transition-transform duration-300">
-                      <Cpu className="w-6 h-6 text-blue-400" />
+              <Card className="group hover:scale-105 transition-transform duration-300 bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30 group-hover:scale-110 transition-transform duration-300">
+                        <Cpu className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">CPU Usage</h3>
+                        <p className="text-sm text-slate-400">{systemInfo?.cpu.model}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">CPU Usage</h3>
-                      <p className="text-sm text-slate-400">{systemInfo?.cpu.model}</p>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gradient">
+                        {systemInfo?.cpu.usage.toFixed(1)}%
+                      </div>
+                      <div className="text-sm text-slate-400">
+                        {systemInfo?.cpu.cores} cores
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gradient">
-                      {systemInfo?.cpu.usage.toFixed(1)}%
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      {systemInfo?.cpu.cores} cores
-                    </div>
+                  <div className="progress-bar">
+                    <div 
+                      className={`progress-fill ${getUsageColor(systemInfo?.cpu.usage || 0)}`}
+                      style={{ width: `${systemInfo?.cpu.usage || 0}%` }}
+                    />
                   </div>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className={`progress-fill ${getUsageColor(systemInfo?.cpu.usage || 0)}`}
-                    style={{ width: `${systemInfo?.cpu.usage || 0}%` }}
-                  />
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Memory Card */}
-              <div className="card-hover group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/30 group-hover:scale-110 transition-transform duration-300">
-                      <MemoryStick className="w-6 h-6 text-green-400" />
+              <Card className="group hover:scale-105 transition-transform duration-300 bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/30 group-hover:scale-110 transition-transform duration-300">
+                        <MemoryStick className="w-6 h-6 text-green-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Memory</h3>
+                        <p className="text-sm text-slate-400">System RAM</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">Memory</h3>
-                      <p className="text-sm text-slate-400">System RAM</p>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gradient">
+                        {systemInfo?.memory.percent.toFixed(1)}%
+                      </div>
+                      <div className="text-sm text-slate-400">
+                        {formatBytes(systemInfo?.memory.used || 0)} / {formatBytes(systemInfo?.memory.total || 0)}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gradient">
-                      {systemInfo?.memory.percent.toFixed(1)}%
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      {formatBytes(systemInfo?.memory.used || 0)} / {formatBytes(systemInfo?.memory.total || 0)}
-                    </div>
+                  <div className="progress-bar">
+                    <div 
+                      className={`progress-fill ${getUsageColor(systemInfo?.memory.percent || 0)}`}
+                      style={{ width: `${systemInfo?.memory.percent || 0}%` }}
+                    />
                   </div>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className={`progress-fill ${getUsageColor(systemInfo?.memory.percent || 0)}`}
-                    style={{ width: `${systemInfo?.memory.percent || 0}%` }}
-                  />
-                </div>
-              </div>
+                </CardContent>
+              </Card>
 
               {/* Uptime Card */}
-              <div className="card-hover group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30 group-hover:scale-110 transition-transform duration-300">
-                      <Activity className="w-6 h-6 text-purple-400" />
+              <Card className="group hover:scale-105 transition-transform duration-300 bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30 group-hover:scale-110 transition-transform duration-300">
+                        <Activity className="w-6 h-6 text-purple-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">System Uptime</h3>
+                        <p className="text-sm text-slate-400">Continuous operation</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white">System Uptime</h3>
-                      <p className="text-sm text-slate-400">Continuous operation</p>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-gradient">
+                        {formatUptime(systemInfo?.uptime || 0)}
+                      </div>
+                      <div className="text-sm text-slate-400">
+                        Running smoothly
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-gradient">
-                      {formatUptime(systemInfo?.uptime || 0)}
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      Running smoothly
-                    </div>
+                  <div className="flex items-center space-x-2 mt-4">
+                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-slow"></div>
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
+                      System Online
+                    </Badge>
                   </div>
-                </div>
-                <div className="flex items-center space-x-2 mt-4">
-                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-slow"></div>
-                  <span className="text-green-400 font-medium">System Online</span>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Storage Details */}
-            <div className="card-hover">
-              <h3 className="text-2xl font-bold mb-6 flex items-center text-gradient">
-                <HardDrive className="w-7 h-7 mr-3 text-purple-500" />
-                Storage Overview
-              </h3>
-              <div className="grid gap-6">
+            <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold flex items-center text-gradient">
+                  <HardDrive className="w-7 h-7 mr-3 text-purple-500" />
+                  Storage Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 {systemInfo?.disk.map((disk, index) => (
-                  <div key={index} className="glass p-6 rounded-2xl hover-lift" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-400/30">
-                          <HardDrive className="w-5 h-5 text-orange-400" />
+                  <Card key={index} className="bg-slate-700/30 border-slate-600/50 hover:bg-slate-700/50 transition-colors duration-300" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-400/30">
+                            <HardDrive className="w-5 h-5 text-orange-400" />
+                          </div>
+                          <div>
+                            <span className="font-bold text-lg text-white">{disk.device}</span>
+                            <p className="text-sm text-slate-400">{disk.mountpoint}</p>
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-bold text-lg text-white">{disk.device}</span>
-                          <p className="text-sm text-slate-400">{disk.mountpoint}</p>
+                        <div className="text-right">
+                          <span className="text-2xl font-bold text-gradient">{disk.percent.toFixed(1)}%</span>
+                          <Badge 
+                            variant={disk.percent > 80 ? "destructive" : disk.percent > 60 ? "secondary" : "default"}
+                            className="ml-2"
+                          >
+                            {disk.percent > 80 ? "High" : disk.percent > 60 ? "Medium" : "Low"} Usage
+                          </Badge>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="text-2xl font-bold text-gradient">{disk.percent.toFixed(1)}%</span>
-                        <p className="text-sm text-slate-400">Used</p>
+                      <div className="progress-bar mb-4">
+                        <div 
+                          className={`progress-fill ${getUsageColor(disk.percent)}`}
+                          style={{ width: `${disk.percent}%` }}
+                        />
                       </div>
-                    </div>
-                    <div className="progress-bar mb-4">
-                      <div 
-                        className={`progress-fill ${getUsageColor(disk.percent)}`}
-                        style={{ width: `${disk.percent}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-sm text-slate-400">
-                      <span>{formatBytes(disk.used)} used</span>
-                      <span>{formatBytes(disk.free)} free</span>
-                      <span>{formatBytes(disk.total)} total</span>
-                    </div>
-                  </div>
+                      <div className="flex justify-between text-sm text-slate-400">
+                        <span>{formatBytes(disk.used)} used</span>
+                        <span>{formatBytes(disk.free)} free</span>
+                        <span>{formatBytes(disk.total)} total</span>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 

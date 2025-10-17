@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Server, Lock, User, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface LoginFormProps {
   onLogin: (username: string, password: string) => void;
@@ -46,15 +49,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading = false, error }
                 Username
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-400 transition-colors duration-200" />
                 </div>
-                <input
+                <Input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm hover:bg-slate-700/70"
+                  className="pl-10 bg-slate-700/50 border-slate-600/50 text-white placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 backdrop-blur-sm hover:bg-slate-700/70"
                   placeholder="Enter your username"
                   required
                 />
@@ -67,51 +70,53 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading = false, error }
                 Password
               </label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                   <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-400 transition-colors duration-200" />
                 </div>
-                <input
+                <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm hover:bg-slate-700/70"
+                  className="pl-10 pr-12 bg-slate-700/50 border-slate-600/50 text-white placeholder-slate-400 focus:ring-blue-500 focus:border-blue-500 backdrop-blur-sm hover:bg-slate-700/70"
                   placeholder="Enter your password"
                   required
                 />
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-blue-400 transition-colors duration-200 hover:scale-110"
+                  className="absolute inset-y-0 right-0 px-3 text-slate-400 hover:text-blue-400 hover:bg-transparent transition-colors duration-200 hover:scale-110"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm backdrop-blur-sm animate-shake">
-                {error}
-              </div>
+              <Alert className="bg-red-500/10 border-red-500/20 text-red-400 backdrop-blur-sm animate-shake">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
             )}
 
             {/* Login Button */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full glass-button bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 animate-fade-in-up hover:scale-105 active:scale-95"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition-all duration-300 animate-fade-in-up hover:scale-105 active:scale-95"
               style={{ animationDelay: '0.3s' }}
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  <span>Signing in...</span>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  Signing in...
                 </>
               ) : (
-                <span>Sign In</span>
+                'Sign In'
               )}
-            </button>
+            </Button>
           </form>
 
           {/* Default Credentials Info */}

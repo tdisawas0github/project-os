@@ -16,6 +16,7 @@ import {
   Signal
 } from 'lucide-react';
 import axios from 'axios';
+import { Badge } from '@/components/ui/badge';
 
 interface NetworkInterface {
   name: string;
@@ -265,11 +266,12 @@ const NetworkManager: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(iface.status)}
-                    <span className={`text-sm font-medium capitalize ${
-                      iface.status.toLowerCase() === 'up' ? 'text-green-400' : 'text-red-400'
-                    }`}>
+                    <Badge 
+                      variant={iface.status.toLowerCase() === 'up' ? "default" : "secondary"}
+                      className={iface.status.toLowerCase() === 'up' ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-red-500/20 text-red-400 border-red-500/30"}
+                    >
                       {iface.status}
-                    </span>
+                    </Badge>
                   </div>
                 </div>
 
