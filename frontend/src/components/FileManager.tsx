@@ -195,8 +195,8 @@ const FileManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="fade-in">
-        <div className="card">
+      <div className="animate-fade-in">
+        <div className="card-enhanced">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
             <span className="ml-3 text-slate-400">Loading files...</span>
@@ -207,16 +207,16 @@ const FileManager: React.FC = () => {
   }
 
   return (
-    <div className="fade-in space-y-6">
+    <div className="animate-fade-in space-y-6">
       {/* Header */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-orange-500/20 rounded-xl">
               <Folder className="h-6 w-6 text-orange-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold gradient-text">File Manager</h2>
+              <h2 className="text-2xl font-bold text-gradient-primary">File Manager</h2>
               <p className="text-slate-400">Browse and manage your files</p>
             </div>
           </div>
@@ -250,7 +250,7 @@ const FileManager: React.FC = () => {
       </div>
 
       {/* Navigation */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <button
@@ -295,7 +295,7 @@ const FileManager: React.FC = () => {
 
       {/* Create Folder Form */}
       {showCreateFolder && (
-        <div className="card slide-up">
+        <div className="card-enhanced animate-slide-up">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <FolderPlus className="h-5 w-5 text-blue-400" />
@@ -333,7 +333,7 @@ const FileManager: React.FC = () => {
       )}
 
       {/* Files List */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-indigo-500/20 rounded-lg">
             <File className="h-5 w-5 text-indigo-400" />
@@ -363,7 +363,7 @@ const FileManager: React.FC = () => {
             {filteredFiles.map((file, index) => (
               <div
                 key={file.name}
-                className="metric-card slide-up flex items-center justify-between p-4 hover:bg-slate-700/40 cursor-pointer transition-all duration-300"
+                className="card-enhanced animate-slide-up flex items-center justify-between p-4 hover:bg-slate-800/60 cursor-pointer"
                 style={{ animationDelay: `${index * 0.05}s` }}
                 onClick={() => {
                   if (file.type === 'directory') {
@@ -395,7 +395,7 @@ const FileManager: React.FC = () => {
                         e.stopPropagation();
                         // Handle download
                       }}
-                      className="glass-button p-2 rounded-lg text-blue-400 hover:text-blue-300 transition-all duration-300"
+                      className="glass-button p-2 rounded-lg text-blue-400 hover:text-blue-300"
                     >
                       <Download className="h-4 w-4" />
                     </button>
@@ -405,7 +405,7 @@ const FileManager: React.FC = () => {
                       e.stopPropagation();
                       // Handle delete
                     }}
-                    className="glass-button p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300"
+                    className="glass-button p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

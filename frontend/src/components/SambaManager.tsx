@@ -213,16 +213,16 @@ const SambaManager: React.FC = () => {
   }
 
   return (
-    <div className="fade-in space-y-6">
+    <div className="animate-fade-in space-y-6">
       {/* Header */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-purple-500/20 rounded-xl">
               <Share2 className="h-6 w-6 text-purple-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold gradient-text">Samba Sharing</h2>
+              <h2 className="text-2xl font-bold text-gradient-primary">Samba Sharing</h2>
               <p className="text-slate-400">Manage network file shares</p>
             </div>
           </div>
@@ -270,7 +270,7 @@ const SambaManager: React.FC = () => {
       )}
 
       {/* Service Status */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <Server className="w-6 h-6 text-blue-400" />
@@ -338,7 +338,7 @@ const SambaManager: React.FC = () => {
       <div className="flex items-center space-x-4">
         <button
           onClick={() => setShowNewShare(!showNewShare)}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+          className="btn-primary flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>New Share</span>
@@ -347,7 +347,7 @@ const SambaManager: React.FC = () => {
 
       {/* New Share Form */}
       {showNewShare && (
-        <div className="card space-y-4">
+        <div className="card-enhanced space-y-4 animate-slide-up">
           <h3 className="text-lg font-semibold text-white">Create New Share</h3>
           
           <div className="grid grid-cols-2 gap-4">
@@ -423,7 +423,7 @@ const SambaManager: React.FC = () => {
       )}
 
       {/* Shares List */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-white">Active Shares</h3>
           <span className="text-sm text-slate-400">{config.shares.length} shares configured</span>

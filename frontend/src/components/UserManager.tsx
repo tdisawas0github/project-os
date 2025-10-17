@@ -100,22 +100,22 @@ const UserManager: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="glass-strong p-6 rounded-3xl">
+      <div className="card-enhanced p-6 rounded-3xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/30">
               <Users className="w-7 h-7 text-green-400" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-gradient">User Management</h2>
+              <h2 className="text-3xl font-bold text-gradient-primary">User Management</h2>
               <p className="text-slate-400 text-lg font-medium">Manage system users and permissions</p>
             </div>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="btn-secondary flex items-center space-x-2 hover:scale-105 transition-transform duration-300"
+            className="btn-secondary flex items-center space-x-2"
           >
             <Plus className="w-5 h-5" />
             <span>Add User</span>
@@ -135,7 +135,7 @@ const UserManager: React.FC = () => {
 
       {/* Create User Form */}
       {showCreateForm && (
-        <div className="card-hover animate-slide-in-up">
+        <div className="card-enhanced animate-slide-up">
           <h3 className="text-xl font-bold text-white mb-6 flex items-center">
             <UserCheck className="w-6 h-6 mr-3 text-green-400" />
             Create New User
@@ -213,8 +213,8 @@ const UserManager: React.FC = () => {
       )}
 
       {/* Users List */}
-      <div className="card-hover">
-        <h3 className="text-2xl font-bold text-gradient mb-6 flex items-center">
+      <div className="card-enhanced">
+        <h3 className="text-2xl font-bold text-gradient-primary mb-6 flex items-center">
           <Shield className="w-6 h-6 mr-3 text-blue-400" />
           System Users ({users.length})
         </h3>

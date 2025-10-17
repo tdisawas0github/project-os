@@ -107,8 +107,8 @@ const NetworkManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="fade-in">
-        <div className="card">
+      <div className="animate-fade-in">
+        <div className="card-enhanced">
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
             <span className="ml-3 text-slate-400">Loading network configuration...</span>
@@ -120,8 +120,8 @@ const NetworkManager: React.FC = () => {
 
   if (error) {
     return (
-      <div className="fade-in">
-        <div className="card">
+      <div className="animate-fade-in">
+        <div className="card-enhanced">
           <div className="flex items-center justify-center py-12 text-center">
             <div>
               <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -140,16 +140,16 @@ const NetworkManager: React.FC = () => {
   }
 
   return (
-    <div className="fade-in space-y-6">
+    <div className="animate-fade-in space-y-6">
       {/* Header */}
-      <div className="card">
+      <div className="card-enhanced">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-green-500/20 rounded-xl">
               <Network className="h-6 w-6 text-green-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold gradient-text">Network Configuration</h2>
+              <h2 className="text-2xl font-bold text-gradient-primary">Network Configuration</h2>
               <p className="text-slate-400">Monitor and configure network settings</p>
             </div>
           </div>
@@ -158,7 +158,7 @@ const NetworkManager: React.FC = () => {
             disabled={refreshing}
             className="glass-button flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 disabled:opacity-50"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`${refreshing ? 'animate-spin' : ''} h-4 w-4`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -166,7 +166,7 @@ const NetworkManager: React.FC = () => {
 
       {/* Network Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="metric-card slide-up">
+        <div className="card-enhanced animate-slide-up">
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-blue-500/20 rounded-xl">
               <Server className="h-6 w-6 text-blue-400" />
@@ -178,7 +178,7 @@ const NetworkManager: React.FC = () => {
           </div>
         </div>
 
-        <div className="metric-card slide-up" style={{ animationDelay: '0.1s' }}>
+        <div className="card-enhanced animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-purple-500/20 rounded-xl">
               <Globe className="h-6 w-6 text-purple-400" />
@@ -190,7 +190,7 @@ const NetworkManager: React.FC = () => {
           </div>
         </div>
 
-        <div className="metric-card slide-up" style={{ animationDelay: '0.2s' }}>
+        <div className="card-enhanced animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <div className="flex items-center space-x-3">
             <div className="p-3 bg-orange-500/20 rounded-xl">
               <Signal className="h-6 w-6 text-orange-400" />
@@ -206,7 +206,7 @@ const NetworkManager: React.FC = () => {
       </div>
 
       {/* DNS Servers */}
-      <div className="card slide-up" style={{ animationDelay: '0.3s' }}>
+      <div className="card-enhanced animate-slide-up" style={{ animationDelay: '0.3s' }}>
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-cyan-500/20 rounded-lg">
             <Globe className="h-5 w-5 text-cyan-400" />
@@ -237,7 +237,7 @@ const NetworkManager: React.FC = () => {
       </div>
 
       {/* Network Interfaces */}
-      <div className="card slide-up" style={{ animationDelay: '0.4s' }}>
+      <div className="card-enhanced animate-slide-up" style={{ animationDelay: '0.4s' }}>
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-indigo-500/20 rounded-lg">
             <Activity className="h-5 w-5 text-indigo-400" />
@@ -253,7 +253,7 @@ const NetworkManager: React.FC = () => {
             {networkConfig.interfaces.map((iface, index) => (
               <div
                 key={iface.name}
-                className="bg-slate-700/30 border border-slate-600/50 rounded-lg p-6 backdrop-blur-sm hover:bg-slate-700/40 transition-all duration-300"
+                className="card-enhanced animate-slide-up"
                 style={{ animationDelay: `${0.5 + index * 0.1}s` }}
               >
                 <div className="flex items-center justify-between mb-4">
@@ -317,7 +317,7 @@ const NetworkManager: React.FC = () => {
       </div>
 
       {/* Network Settings (Future) */}
-      <div className="card slide-up" style={{ animationDelay: '0.6s' }}>
+      <div className="card-enhanced animate-slide-up" style={{ animationDelay: '0.6s' }}>
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-yellow-500/20 rounded-lg">
             <Settings className="h-5 w-5 text-yellow-400" />
