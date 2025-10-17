@@ -64,7 +64,10 @@ function App() {
     if (isAuthenticated) {
       const fetchSystemInfo = async () => {
         try {
-          const response = await axios.get('http://localhost:8080/api/v1/system/info');
+          const token = localStorage.getItem('token');
+          const response = await axios.get('http://localhost:8080/api/v1/system', {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
           setSystemInfo(response.data);
         } catch (error) {
           console.error('Failed to fetch system info:', error);
@@ -74,6 +77,10 @@ function App() {
       };
 
       fetchSystemInfo();
+      // Set up interval to refresh system info every 5 seconds
+      const interval = setInterval(fetchSystemInfo, 5000);
+      
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated])
 
@@ -163,56 +170,60 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      {/* Header */}
-      <header className="floating-header sticky top-0 z-50 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Server className="h-8 w-8 text-blue-400" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+        {/* Modern Header */}
+        <header className="glass-strong p-6 mb-8 animate-fade-in-up">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-400/30">
+                <Server className="w-8 h-8 text-gradient" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gradient">NAS OS</h1>
+                <p className="text-slate-300 font-medium">Network Attached Storage System</p>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold gradient-text">NAS OS</h1>
-            <span className="status-indicator text-xs text-green-400 font-medium">Online</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 px-3 py-2 bg-slate-700/50 rounded-lg backdrop-blur-sm">
-              <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-              <span className="text-sm text-slate-300">Welcome, <span className="text-blue-400 font-medium">{user?.username}</span>!</span>
+            <div className="flex items-center space-x-4">
+              {user && (
+                <div className="flex items-center space-x-3 px-4 py-2 glass rounded-xl">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse-slow"></div>
+                  <span className="text-slate-200 font-medium">{user.username}</span>
+                </div>
+              )}
+              <button
+                onClick={handleLogout}
+                className="btn-secondary flex items-center space-x-2 hover-lift"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
             </div>
-            <button
-              onClick={handleLogout}
-              className="glass-button flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Navigation */}
+      {/* Modern Navigation */}
       <nav className="px-6 py-4">
-        <div className="flex space-x-1 bg-slate-800/50 backdrop-blur-sm rounded-xl p-1 border border-slate-700/50">
+        <div className="flex space-x-1 bg-slate-800/50 backdrop-blur-sm rounded-xl p-1 border border-slate-700/50 animate-slide-in-right">
           {[
              { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
              { id: 'files', label: 'Files', icon: FolderOpen },
              { id: 'samba', label: 'Sharing', icon: Share2 },
              { id: 'users', label: 'Users', icon: Users },
              { id: 'network', label: 'Network', icon: Wifi }
-           ].map((tab) => {
+           ].map((tab, index) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`nav-tab flex items-center space-x-2 px-4 py-3 rounded-lg transition-all duration-300 ${
+                className={`nav-tab flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30 active'
                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <Icon className="h-4 w-4" />
-                <span className="font-medium">{tab.label}</span>
+                <Icon className="w-5 h-5" />
+                <span className="font-semibold">{tab.label}</span>
               </button>
             );
           })}
@@ -221,182 +232,144 @@ function App() {
 
       {/* Main Content */}
       <main className="p-6 space-y-8">
+        {/* Modern Dashboard */}
         {activeTab === 'dashboard' && (
-          <div className="fade-in">
+          <div className="space-y-8 animate-fade-in-up">
             {/* Welcome Section */}
-            <div className="card mb-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-3xl font-bold gradient-text mb-2">Welcome to NAS OS</h2>
-                  <p className="text-slate-400">System: <span className="text-blue-400 font-medium">{systemInfo?.host.hostname}</span> • {systemInfo?.host.os} {systemInfo?.host.arch}</p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <p className="text-sm text-slate-400">Uptime</p>
-                    <p className="text-xl font-bold text-green-400">{formatUptime(systemInfo?.uptime || 0)}</p>
-                  </div>
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <Server className="h-8 w-8 text-white" />
-                  </div>
-                </div>
-              </div>
+            <div className="glass-strong p-8 text-center">
+              <h2 className="text-4xl font-bold text-gradient mb-4">
+                Welcome to Your NAS
+              </h2>
+              <p className="text-xl text-slate-300 font-medium">
+                Monitor and manage your network storage system
+              </p>
             </div>
 
-            {/* System Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {/* CPU Usage */}
-              <div className="metric-card slide-up">
+            {/* System Overview */}
+            <div className="grid-modern">
+              {/* CPU Card */}
+              <div className="card-hover group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-500/20 rounded-lg">
-                      <Cpu className="w-5 h-5 text-blue-400" />
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-400/30 group-hover:scale-110 transition-transform duration-300">
+                      <Cpu className="w-6 h-6 text-blue-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">CPU Usage</p>
-                      <p className="text-xs text-slate-400">{systemInfo?.cpu.cores} cores</p>
+                      <h3 className="text-xl font-bold text-white">CPU Usage</h3>
+                      <p className="text-sm text-slate-400">{systemInfo?.cpu.model}</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-blue-400">{systemInfo?.cpu.usage.toFixed(1)}%</span>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gradient">
+                      {systemInfo?.cpu.usage.toFixed(1)}%
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      {systemInfo?.cpu.cores} cores
+                    </div>
+                  </div>
                 </div>
                 <div className="progress-bar">
                   <div 
                     className={`progress-fill ${getUsageColor(systemInfo?.cpu.usage || 0)}`}
-                    style={{ width: `${systemInfo?.cpu.usage}%` }}
+                    style={{ width: `${systemInfo?.cpu.usage || 0}%` }}
                   />
                 </div>
               </div>
 
-              {/* Memory Usage */}
-              <div className="metric-card slide-up" style={{ animationDelay: '0.1s' }}>
+              {/* Memory Card */}
+              <div className="card-hover group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-green-500/20 rounded-lg">
-                      <MemoryStick className="w-5 h-5 text-green-400" />
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/30 group-hover:scale-110 transition-transform duration-300">
+                      <MemoryStick className="w-6 h-6 text-green-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">Memory</p>
-                      <p className="text-xs text-slate-400">{formatBytes(systemInfo?.memory.total || 0)} total</p>
+                      <h3 className="text-xl font-bold text-white">Memory</h3>
+                      <p className="text-sm text-slate-400">System RAM</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-green-400">{systemInfo?.memory.percent.toFixed(1)}%</span>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gradient">
+                      {systemInfo?.memory.percent.toFixed(1)}%
+                    </div>
+                    <div className="text-sm text-slate-400">
+                      {formatBytes(systemInfo?.memory.used || 0)} / {formatBytes(systemInfo?.memory.total || 0)}
+                    </div>
+                  </div>
                 </div>
                 <div className="progress-bar">
                   <div 
                     className={`progress-fill ${getUsageColor(systemInfo?.memory.percent || 0)}`}
-                    style={{ width: `${systemInfo?.memory.percent}%` }}
+                    style={{ width: `${systemInfo?.memory.percent || 0}%` }}
                   />
                 </div>
               </div>
 
-              {/* Storage */}
-              <div className="metric-card slide-up" style={{ animationDelay: '0.2s' }}>
+              {/* Uptime Card */}
+              <div className="card-hover group">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-500/20 rounded-lg">
-                      <HardDrive className="w-5 h-5 text-purple-400" />
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-400/30 group-hover:scale-110 transition-transform duration-300">
+                      <Activity className="w-6 h-6 text-purple-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">Storage</p>
-                      <p className="text-xs text-slate-400">{formatBytes(systemInfo?.disk[0]?.free || 0)} free</p>
+                      <h3 className="text-xl font-bold text-white">System Uptime</h3>
+                      <p className="text-sm text-slate-400">Continuous operation</p>
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-purple-400">
-                    {systemInfo?.disk[0]?.percent.toFixed(1)}%
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div 
-                    className={`progress-fill ${getUsageColor(systemInfo?.disk[0]?.percent || 0)}`}
-                    style={{ width: `${systemInfo?.disk[0]?.percent}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Network Status */}
-              <div className="metric-card slide-up" style={{ animationDelay: '0.3s' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-orange-500/20 rounded-lg">
-                      <Wifi className="w-5 h-5 text-orange-400" />
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gradient">
+                      {formatUptime(systemInfo?.uptime || 0)}
                     </div>
-                    <div>
-                      <p className="font-medium text-white">Network</p>
-                      <p className="text-xs text-slate-400">Connected</p>
+                    <div className="text-sm text-slate-400">
+                      Running smoothly
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium text-green-400">Online</span>
-                  </div>
                 </div>
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Status: Active</span>
-                  <span>Latency: ~1ms</span>
+                <div className="flex items-center space-x-2 mt-4">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse-slow"></div>
+                  <span className="text-green-400 font-medium">System Online</span>
                 </div>
               </div>
             </div>
 
-            {/* Detailed Information */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* System Information */}
-              <div className="card">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <Server className="w-5 h-5 mr-2 text-blue-500" />
-                  System Information
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Hostname:</span>
-                    <span>{systemInfo?.host.hostname}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Operating System:</span>
-                    <span>{systemInfo?.host.os}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Platform:</span>
-                    <span>{systemInfo?.host.platform}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Architecture:</span>
-                    <span>{systemInfo?.host.arch}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">CPU Model:</span>
-                    <span className="text-right">{systemInfo?.cpu.model}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Storage Details */}
-              <div className="card">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
-                  <HardDrive className="w-5 h-5 mr-2 text-purple-500" />
-                  Storage Details
-                </h3>
-                <div className="space-y-4">
-                  {systemInfo?.disk.map((disk, index) => (
-                    <div key={index} className="border-l-4 border-purple-500 pl-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium">{disk.device}</span>
-                        <span className="text-sm text-slate-400">{disk.percent.toFixed(1)}%</span>
-                      </div>
-                      <div className="progress-bar mb-2">
-                        <div 
-                          className={`progress-fill ${getUsageColor(disk.percent)}`}
-                          style={{ width: `${disk.percent}%` }}
-                        />
-                      </div>
-                      <div className="text-sm text-slate-400">
-                        <div>Mount: {disk.mountpoint}</div>
+            {/* Storage Details */}
+            <div className="card-hover">
+              <h3 className="text-2xl font-bold mb-6 flex items-center text-gradient">
+                <HardDrive className="w-7 h-7 mr-3 text-purple-500" />
+                Storage Overview
+              </h3>
+              <div className="grid gap-6">
+                {systemInfo?.disk.map((disk, index) => (
+                  <div key={index} className="glass p-6 rounded-2xl hover-lift" style={{ animationDelay: `${index * 0.1}s` }}>
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-400/30">
+                          <HardDrive className="w-5 h-5 text-orange-400" />
+                        </div>
                         <div>
-                          {formatBytes(disk.used)} used of {formatBytes(disk.total)} 
-                          ({formatBytes(disk.free)} free)
+                          <span className="font-bold text-lg text-white">{disk.device}</span>
+                          <p className="text-sm text-slate-400">{disk.mountpoint}</p>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-gradient">{disk.percent.toFixed(1)}%</span>
+                        <p className="text-sm text-slate-400">Used</p>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="progress-bar mb-4">
+                      <div 
+                        className={`progress-fill ${getUsageColor(disk.percent)}`}
+                        style={{ width: `${disk.percent}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-sm text-slate-400">
+                      <span>{formatBytes(disk.used)} used</span>
+                      <span>{formatBytes(disk.free)} free</span>
+                      <span>{formatBytes(disk.total)} total</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
