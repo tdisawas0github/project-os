@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: #0f172a;
+    color: #e2e8f0;
+  }
+}
+
+@layer components {
+  .card {
+    background-color: #1e293b;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    border: 1px solid #334155;
+  }
+
+  .metric-card {
+    background: linear-gradient(to bottom right, #1e293b, #0f172a);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    border: 1px solid #334155;
+    transition: border-color 0.15s ease-in-out;
+  }
+
+  .metric-card:hover {
+    border-color: #475569;
+  }
+
+  .progress-bar {
+    width: 100%;
+    background-color: #334155;
+    border-radius: 9999px;
+    height: 0.5rem;
+  }
+
+  .progress-fill {
+    height: 0.5rem;
+    border-radius: 9999px;
+    transition: all 0.3s ease-in-out;
+  }
+}
