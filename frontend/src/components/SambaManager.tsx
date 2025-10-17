@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Share2, 
-  Play, 
-  Square, 
+  Folder, 
+  Users, 
+  Settings, 
   Plus, 
   Trash2, 
-  Users, 
+  Edit3, 
+  Eye, 
+  EyeOff,
+  Server,
+  Shield,
+  HardDrive,
+  Network,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  RefreshCw,
+  Globe,
   Lock,
   Unlock,
-  RefreshCw,
-  Server,
-  CheckCircle,
-  XCircle
+  UserCheck,
+  UserX,
+  Play,
+  Square
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -19,14 +31,16 @@ interface SambaShare {
   name: string;
   path: string;
   comment: string;
-  readOnly: boolean;
-  guestAccess: boolean;
-  users: string[];
+  readonly: boolean;
+  browseable: boolean;
+  guest_ok: boolean;
+  valid_users: string[];
 }
 
 interface SambaConfig {
+  workgroup: string;
+  server_string: string;
   shares: SambaShare[];
-  status: string;
 }
 
 interface SambaStatus {
@@ -37,89 +51,121 @@ interface SambaStatus {
 }
 
 const SambaManager: React.FC = () => {
-  const [config, setConfig] = useState<SambaConfig>({ shares: [], status: 'stopped' });
-  const [status, setStatus] = useState<SambaStatus>({ installed: false, running: false, version: 'unknown', shares: 0 });
-  const [loading, setLoading] = useState(false);
+  const [config, setConfig] = useState<SambaConfig>({
+    workgroup: 'WORKGROUP',
+    server_string: 'NAS Server',
+    shares: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showNewShare, setShowNewShare] = useState(false);
-  const [newShare, setNewShare] = useState<SambaShare>({
+  const [status, setStatus] = useState<SambaStatus>({
+    installed: false,
+    running: false,
+    version: 'Unknown',
+    shares: 0
+  });
+  const [newShare, setNewShare] = useState({
     name: '',
-    path: '/Users/Shared',
+    path: '',
     comment: '',
-    readOnly: false,
-    guestAccess: true,
-    users: []
+    readonly: false,
+    guest_ok: false
   });
 
   useEffect(() => {
-    loadSambaConfig();
-    loadSambaStatus();
+    fetchConfig();
+    checkSambaStatus();
   }, []);
 
-  const loadSambaConfig = async () => {
+  const fetchConfig = async () => {
     try {
-      const response = await axios.get<SambaConfig>('http://localhost:8080/api/v1/samba/shares');
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/v1/samba/config', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setConfig(response.data);
-    } catch (error) {
-      console.error('Error loading Samba config:', error);
+    } catch (err) {
+      setError('Failed to fetch Samba configuration');
+      console.error('Error fetching Samba config:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadSambaStatus = async () => {
+  const checkSambaStatus = async () => {
     try {
-      const response = await axios.get<SambaStatus>('http://localhost:8080/api/v1/samba/status');
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/api/v1/samba/status', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setStatus(response.data);
-    } catch (error) {
-      console.error('Error loading Samba status:', error);
+    } catch (err) {
+      setStatus(prev => ({ ...prev, running: false, installed: false }));
+      console.error('Error checking Samba status:', err);
     }
   };
 
   const handleStartService = async () => {
-    setLoading(true);
     try {
-      await axios.post('http://localhost:8080/api/v1/samba/start');
-      setTimeout(() => {
-        loadSambaStatus();
-        loadSambaConfig();
-      }, 1000);
-    } catch (error) {
-      console.error('Error starting Samba service:', error);
-    } finally {
-      setLoading(false);
+      const token = localStorage.getItem('token');
+      await axios.post('/api/v1/samba/start', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await checkSambaStatus();
+    } catch (err) {
+      setError('Failed to start Samba service');
+      console.error('Error starting Samba service:', err);
     }
   };
 
   const handleStopService = async () => {
-    setLoading(true);
     try {
-      await axios.post('http://localhost:8080/api/v1/samba/stop');
-      setTimeout(() => {
-        loadSambaStatus();
-        loadSambaConfig();
-      }, 1000);
-    } catch (error) {
-      console.error('Error stopping Samba service:', error);
-    } finally {
-      setLoading(false);
+      const token = localStorage.getItem('token');
+      await axios.post('/api/v1/samba/stop', {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await checkSambaStatus();
+    } catch (err) {
+      setError('Failed to stop Samba service');
+      console.error('Error stopping Samba service:', err);
     }
   };
 
-  const handleCreateShare = async () => {
+  const handleCreateShare = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newShare.name.trim() || !newShare.path.trim()) return;
 
     try {
-      await axios.post('http://localhost:8080/api/v1/samba/shares', newShare);
+      const token = localStorage.getItem('token');
+      const shareData = {
+        name: newShare.name,
+        path: newShare.path,
+        comment: newShare.comment,
+        readonly: newShare.readonly,
+        browseable: true,
+        guest_ok: newShare.guest_ok,
+        valid_users: []
+      };
+      
+      await axios.post('/api/v1/samba/shares', shareData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
       setNewShare({
         name: '',
-        path: '/Users/Shared',
+        path: '',
         comment: '',
-        readOnly: false,
-        guestAccess: true,
-        users: []
+        readonly: false,
+        guest_ok: false
       });
       setShowNewShare(false);
-      loadSambaConfig();
-    } catch (error) {
-      console.error('Error creating share:', error);
+      await fetchConfig();
+    } catch (err) {
+      setError('Failed to create share');
+      console.error('Error creating share:', err);
     }
   };
 
@@ -127,42 +173,103 @@ const SambaManager: React.FC = () => {
     if (!confirm(`Are you sure you want to delete the share "${shareName}"?`)) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/v1/samba/shares/${shareName}`);
-      loadSambaConfig();
-    } catch (error) {
-      console.error('Error deleting share:', error);
+      const token = localStorage.getItem('token');
+      await axios.delete(`/api/v1/samba/shares/${shareName}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchConfig();
+    } catch (err) {
+      setError('Failed to delete share');
+      console.error('Error deleting share:', err);
     }
   };
 
-  const getStatusColor = (running: boolean) => {
-    return running ? 'text-green-400' : 'text-red-400';
+  const getStatusIcon = (running: boolean) => {
+    return running ? (
+      <CheckCircle className="h-5 w-5 text-green-400" />
+    ) : (
+      <AlertCircle className="h-5 w-5 text-red-400" />
+    );
   };
 
-  const getStatusIcon = (running: boolean) => {
-    return running ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />;
+  const getStatusColor = (running: boolean) => {
+    return running 
+      ? 'text-green-400 bg-green-500/20 border-green-500/30'
+      : 'text-red-400 bg-red-500/20 border-red-500/30';
   };
+
+  if (loading) {
+    return (
+      <div className="fade-in">
+        <div className="card">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <span className="ml-3 text-slate-400">Loading Samba configuration...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="fade-in space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Share2 className="w-6 h-6 text-blue-400" />
-          <h2 className="text-2xl font-bold text-white">Samba File Sharing</h2>
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-purple-500/20 rounded-xl">
+              <Share2 className="h-6 w-6 text-purple-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold gradient-text">Samba Sharing</h2>
+              <p className="text-slate-400">Manage network file shares</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg border ${getStatusColor(status.running)}`}>
+              {getStatusIcon(status.running)}
+              <span className="font-medium">{status.running ? 'Running' : 'Stopped'}</span>
+            </div>
+            <button
+              onClick={status.running ? handleStopService : handleStartService}
+              className={`glass-button flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+                status.running 
+                  ? 'bg-red-500/20 hover:bg-red-500/30 text-red-400' 
+                  : 'bg-green-500/20 hover:bg-green-500/30 text-green-400'
+              }`}
+            >
+              {status.running ? (
+                <>
+                  <UserX className="h-4 w-4" />
+                  <span>Stop Service</span>
+                </>
+              ) : (
+                <>
+                  <UserCheck className="h-4 w-4" />
+                  <span>Start Service</span>
+                </>
+              )}
+            </button>
+            <button
+              onClick={fetchConfig}
+              className="glass-button p-2 rounded-lg transition-all duration-300"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => {
-            loadSambaConfig();
-            loadSambaStatus();
-          }}
-          className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center space-x-3 backdrop-blur-sm">
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <span className="text-red-400">{error}</span>
+        </div>
+      )}
+
       {/* Service Status */}
-      <div className="bg-slate-800 rounded-lg p-6">
+      <div className="card">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <Server className="w-6 h-6 text-blue-400" />
@@ -236,7 +343,7 @@ const SambaManager: React.FC = () => {
 
       {/* New Share Form */}
       {showNewShare && (
-        <div className="bg-slate-800 rounded-lg p-6 space-y-4">
+        <div className="card space-y-4">
           <h3 className="text-lg font-semibold text-white">Create New Share</h3>
           
           <div className="grid grid-cols-2 gap-4">
@@ -277,8 +384,8 @@ const SambaManager: React.FC = () => {
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                checked={newShare.readOnly}
-                onChange={(e) => setNewShare({ ...newShare, readOnly: e.target.checked })}
+                checked={newShare.readonly}
+                onChange={(e) => setNewShare({ ...newShare, readonly: e.target.checked })}
                 className="rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-300">Read Only</span>
@@ -286,8 +393,8 @@ const SambaManager: React.FC = () => {
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                checked={newShare.guestAccess}
-                onChange={(e) => setNewShare({ ...newShare, guestAccess: e.target.checked })}
+                checked={newShare.guest_ok}
+                onChange={(e) => setNewShare({ ...newShare, guest_ok: e.target.checked })}
                 className="rounded bg-slate-700 border-slate-600 text-blue-600 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-300">Guest Access</span>
@@ -312,61 +419,71 @@ const SambaManager: React.FC = () => {
       )}
 
       {/* Shares List */}
-      <div className="bg-slate-800 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-slate-700">
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-white">Active Shares</h3>
+          <span className="text-sm text-slate-400">{config.shares.length} shares configured</span>
         </div>
-        
+
         {config.shares.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            <Share2 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No shares configured</p>
+          <div className="text-center py-8">
+            <Folder className="h-12 w-12 text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-400">No shares configured</p>
+            <p className="text-sm text-slate-500">Create your first share to get started</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-700">
-            {config.shares.map((share, index) => (
-              <div key={index} className="p-4">
+          <div className="space-y-3">
+            {config.shares.map((share) => (
+              <div key={share.name} className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                 <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Share2 className="w-5 h-5 text-blue-400" />
-                      <h4 className="text-lg font-medium text-white">{share.name}</h4>
-                      <div className="flex items-center space-x-2">
-                        {share.readOnly ? (
-                          <div title="Read Only">
-                            <Lock className="w-4 h-4 text-yellow-400" />
-                          </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <Folder className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-white">{share.name}</h4>
+                      <p className="text-sm text-slate-400">{share.path}</p>
+                      {share.comment && (
+                        <p className="text-xs text-slate-500">{share.comment}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="flex items-center space-x-1">
+                        {share.readonly ? (
+                          <Lock className="h-4 w-4 text-yellow-400" />
                         ) : (
-                          <div title="Read/Write">
-                            <Unlock className="w-4 h-4 text-green-400" />
-                          </div>
+                          <Unlock className="h-4 w-4 text-green-400" />
                         )}
-                        {share.guestAccess ? (
-                          <div title="Guest Access">
-                            <Users className="w-4 h-4 text-blue-400" />
-                          </div>
+                        <span className="text-slate-400">
+                          {share.readonly ? 'Read-only' : 'Read-write'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {share.guest_ok ? (
+                          <Globe className="h-4 w-4 text-blue-400" />
                         ) : (
-                          <div title="Authenticated Only">
-                            <Users className="w-4 h-4 text-gray-400" />
-                          </div>
+                          <Shield className="h-4 w-4 text-purple-400" />
                         )}
+                        <span className="text-slate-400">
+                          {share.guest_ok ? 'Guest access' : 'Auth required'}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Users className="h-4 w-4 text-slate-400" />
+                        <span className="text-slate-400">
+                          {share.valid_users.length || 'All'} users
+                        </span>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-400 mb-1">{share.comment}</p>
-                    <p className="text-sm font-mono text-gray-500">{share.path}</p>
-                    {share.users.length > 0 && (
-                      <p className="text-sm text-gray-400 mt-1">
-                        Users: {share.users.join(', ')}
-                      </p>
-                    )}
+                    <button
+                      onClick={() => handleDeleteShare(share.name)}
+                      className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteShare(share.name)}
-                    className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                    title="Delete Share"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
             ))}

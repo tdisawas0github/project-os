@@ -5,285 +5,409 @@ import {
   Upload, 
   Download, 
   Trash2, 
-  Plus,
+  Plus, 
+  Search, 
+  Home, 
   ArrowLeft,
   RefreshCw,
-  HardDrive
+  AlertCircle,
+  Loader2,
+  FolderPlus,
+  FileText,
+  Image,
+  Music,
+  Video,
+  Archive,
+  Code
 } from 'lucide-react';
 import axios from 'axios';
 
-interface FileInfo {
+interface FileItem {
   name: string;
-  path: string;
+  type: 'file' | 'directory';
   size: number;
-  isDir: boolean;
-  modTime: string;
-  mimeType: string;
-}
-
-interface FileListResponse {
-  currentPath: string;
-  files: FileInfo[];
-  totalSize: number;
+  modified: string;
 }
 
 const FileManager: React.FC = () => {
-  const [files, setFiles] = useState<FileInfo[]>([]);
-  const [currentPath, setCurrentPath] = useState('/Users/Shared');
-  const [totalSize, setTotalSize] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [currentPath, setCurrentPath] = useState('/');
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    loadFiles();
+    fetchFiles();
   }, [currentPath]);
 
-  const loadFiles = async () => {
-    setLoading(true);
+  const fetchFiles = async () => {
     try {
-      const response = await axios.get<FileListResponse>(`http://localhost:8080/api/v1/files?path=${encodeURIComponent(currentPath)}`);
-      setFiles(response.data.files);
-      setCurrentPath(response.data.currentPath);
-      setTotalSize(response.data.totalSize);
-    } catch (error) {
-      console.error('Error loading files:', error);
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/v1/files?path=${encodeURIComponent(currentPath)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFiles(response.data.files || []);
+    } catch (err) {
+      setError('Failed to fetch files');
+      console.error('Error fetching files:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileClick = (file: FileInfo) => {
-    if (file.isDir) {
-      setCurrentPath(file.path);
-    } else {
-      // Download file
-      window.open(`http://localhost:8080/api/v1/files/download?path=${encodeURIComponent(file.path)}`, '_blank');
+  const navigateToPath = (path: string) => {
+    setCurrentPath(path);
+    setSelectedFiles([]);
+  };
+
+  const navigateUp = () => {
+    if (currentPath !== '/') {
+      const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
+      navigateToPath(parentPath);
     }
   };
 
-  const handleUpload = async () => {
-    if (!uploadFile) return;
-
-    const formData = new FormData();
-    formData.append('file', uploadFile);
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     try {
-      await axios.post(`http://localhost:8080/api/v1/files/upload?path=${encodeURIComponent(currentPath)}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('path', currentPath);
+      
+      for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+      }
+
+      const token = localStorage.getItem('token');
+      await axios.post('/api/v1/files/upload', formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       });
-      setUploadFile(null);
-      loadFiles();
-    } catch (error) {
-      console.error('Error uploading file:', error);
+
+      await fetchFiles();
+    } catch (err) {
+      setError('Failed to upload files');
+      console.error('Error uploading files:', err);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleDelete = async (filePath: string) => {
-    if (!confirm('Are you sure you want to delete this file?')) return;
 
-    try {
-      await axios.delete(`http://localhost:8080/api/v1/files?path=${encodeURIComponent(filePath)}`);
-      loadFiles();
-    } catch (error) {
-      console.error('Error deleting file:', error);
-    }
-  };
 
-  const handleCreateFolder = async () => {
+  const createFolder = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!newFolderName.trim()) return;
 
     try {
-      await axios.post('http://localhost:8080/api/v1/files/folder', {
+      const token = localStorage.getItem('token');
+      await axios.post('/api/v1/files/folder', {
         path: currentPath,
-        name: newFolderName,
+        name: newFolderName
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+      
       setNewFolderName('');
-      setShowNewFolder(false);
-      loadFiles();
-    } catch (error) {
-      console.error('Error creating folder:', error);
+      setShowCreateFolder(false);
+      await fetchFiles();
+    } catch (err) {
+      setError('Failed to create folder');
+      console.error('Error creating folder:', err);
     }
   };
 
-  const goBack = () => {
-    const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
-    setCurrentPath(parentPath);
-  };
+
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getFileIcon = (file: FileInfo) => {
-    if (file.isDir) {
-      return <Folder className="w-5 h-5 text-blue-400" />;
-    }
-    return <File className="w-5 h-5 text-gray-400" />;
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <HardDrive className="w-6 h-6 text-blue-400" />
-          <h2 className="text-2xl font-bold text-white">File Manager</h2>
+  const getFileIcon = (fileName: string, type: string) => {
+    if (type === 'directory') {
+      return <Folder className="h-5 w-5 text-blue-400" />;
+    }
+
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'svg':
+        return <Image className="h-5 w-5 text-green-400" />;
+      case 'mp3':
+      case 'wav':
+      case 'flac':
+        return <Music className="h-5 w-5 text-purple-400" />;
+      case 'mp4':
+      case 'avi':
+      case 'mkv':
+        return <Video className="h-5 w-5 text-red-400" />;
+      case 'zip':
+      case 'rar':
+      case 'tar':
+      case 'gz':
+        return <Archive className="h-5 w-5 text-yellow-400" />;
+      case 'js':
+      case 'ts':
+      case 'py':
+      case 'go':
+      case 'html':
+      case 'css':
+        return <Code className="h-5 w-5 text-cyan-400" />;
+      case 'txt':
+      case 'md':
+      case 'log':
+        return <FileText className="h-5 w-5 text-slate-400" />;
+      default:
+        return <File className="h-5 w-5 text-slate-400" />;
+    }
+  };
+
+  const filteredFiles = files.filter(file =>
+    file.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="fade-in">
+        <div className="card">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
+            <span className="ml-3 text-slate-400">Loading files...</span>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={loadFiles}
-            className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
-            disabled={loading}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fade-in space-y-6">
+      {/* Header */}
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-orange-500/20 rounded-xl">
+              <Folder className="h-6 w-6 text-orange-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold gradient-text">File Manager</h2>
+              <p className="text-slate-400">Browse and manage your files</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={fetchFiles}
+              className="glass-button p-2 rounded-lg transition-all duration-300"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setShowCreateFolder(true)}
+              className="glass-button flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300"
+            >
+              <FolderPlus className="h-4 w-4" />
+              <span>New Folder</span>
+            </button>
+            <label className="glass-button flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 cursor-pointer">
+              <Upload className="h-4 w-4" />
+              <span>{uploading ? 'Uploading...' : 'Upload'}</span>
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={uploading}
+              />
+            </label>
+          </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between bg-slate-800 rounded-lg p-4">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={goBack}
-            className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
-            disabled={currentPath === '/'}
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <span className="text-sm text-gray-300">Current Path:</span>
-          <span className="font-mono text-sm bg-slate-700 px-2 py-1 rounded">
-            {currentPath}
-          </span>
-        </div>
-        <div className="text-sm text-gray-400">
-          Total: {formatFileSize(totalSize)}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center space-x-4">
-        {/* Upload */}
-        <div className="flex items-center space-x-2">
-          <input
-            type="file"
-            onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-            className="hidden"
-            id="file-upload"
-          />
-          <label
-            htmlFor="file-upload"
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg cursor-pointer transition-colors"
-          >
-            <Upload className="w-4 h-4" />
-            <span>Choose File</span>
-          </label>
-          {uploadFile && (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-300">{uploadFile.name}</span>
+      <div className="card">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => navigateToPath('/')}
+              className="glass-button p-2 rounded-lg transition-all duration-300"
+            >
+              <Home className="h-4 w-4" />
+            </button>
+            {currentPath !== '/' && (
               <button
-                onClick={handleUpload}
-                className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-sm transition-colors"
+                onClick={navigateUp}
+                className="glass-button p-2 rounded-lg transition-all duration-300"
               >
-                Upload
+                <ArrowLeft className="h-4 w-4" />
               </button>
+            )}
+            <div className="flex items-center space-x-1 text-slate-400">
+              <span className="text-white font-mono">{currentPath}</span>
             </div>
-          )}
+          </div>
+          
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search files..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+            />
+          </div>
         </div>
-
-        {/* New Folder */}
-        <button
-          onClick={() => setShowNewFolder(!showNewFolder)}
-          className="flex items-center space-x-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Folder</span>
-        </button>
       </div>
 
-      {/* New Folder Input */}
-      {showNewFolder && (
-        <div className="flex items-center space-x-2 bg-slate-800 p-4 rounded-lg">
-          <input
-            type="text"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            placeholder="Folder name"
-            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-            onKeyPress={(e) => e.key === 'Enter' && handleCreateFolder()}
-          />
-          <button
-            onClick={handleCreateFolder}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-          >
-            Create
-          </button>
-          <button
-            onClick={() => {
-              setShowNewFolder(false);
-              setNewFolderName('');
-            }}
-            className="px-4 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-center space-x-3 backdrop-blur-sm">
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <span className="text-red-400">{error}</span>
         </div>
       )}
 
-      {/* File List */}
-      <div className="bg-slate-800 rounded-lg overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-400" />
-            <p className="text-gray-400">Loading files...</p>
+      {/* Create Folder Form */}
+      {showCreateFolder && (
+        <div className="card slide-up">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <FolderPlus className="h-5 w-5 text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Create New Folder</h3>
           </div>
-        ) : files.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            <Folder className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>This folder is empty</p>
+          
+          <form onSubmit={createFolder} className="flex space-x-3">
+            <input
+              type="text"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder="Folder name"
+              className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="glass-button bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-4 py-2 rounded-lg transition-all duration-300"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateFolder(false);
+                setNewFolderName('');
+              }}
+              className="glass-button px-4 py-2 rounded-lg transition-all duration-300"
+            >
+              Cancel
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Files List */}
+      <div className="card">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-indigo-500/20 rounded-lg">
+            <File className="h-5 w-5 text-indigo-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-white">Files & Folders</h3>
+          <span className="px-3 py-1 bg-blue-500/20 text-blue-400 text-sm rounded-full border border-blue-500/30">
+            {filteredFiles.length} items
+          </span>
+        </div>
+
+        {filteredFiles.length === 0 ? (
+          <div className="text-center py-12">
+            {searchTerm ? (
+              <>
+                <Search className="h-12 w-12 text-slate-500 mx-auto mb-4" />
+                <p className="text-slate-400">No files found matching "{searchTerm}"</p>
+              </>
+            ) : (
+              <>
+                <Folder className="h-12 w-12 text-slate-500 mx-auto mb-4" />
+                <p className="text-slate-400">This folder is empty</p>
+              </>
+            )}
           </div>
         ) : (
-          <div className="divide-y divide-slate-700">
-            {files.map((file, index) => (
+          <div className="space-y-2">
+            {filteredFiles.map((file, index) => (
               <div
-                key={index}
-                className="flex items-center justify-between p-4 hover:bg-slate-700 transition-colors"
+                key={file.name}
+                className="metric-card slide-up flex items-center justify-between p-4 hover:bg-slate-700/40 cursor-pointer transition-all duration-300"
+                style={{ animationDelay: `${index * 0.05}s` }}
+                onClick={() => {
+                  if (file.type === 'directory') {
+                    const newPath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+                    navigateToPath(newPath);
+                  }
+                }}
               >
-                <div
-                  className="flex items-center space-x-3 flex-1 cursor-pointer"
-                  onClick={() => handleFileClick(file)}
-                >
-                  {getFileIcon(file)}
-                  <div className="flex-1">
-                    <p className="text-white font-medium">{file.name}</p>
-                    <p className="text-sm text-gray-400">
-                      {file.isDir ? 'Folder' : `${formatFileSize(file.size)} • ${file.mimeType}`}
-                    </p>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-shrink-0">
+                    {getFileIcon(file.name, file.type)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-white truncate">{file.name}</h4>
+                    <div className="flex items-center space-x-4 text-sm text-slate-400">
+                      <span className="capitalize">{file.type}</span>
+                      {file.type === 'file' && (
+                        <span>{formatFileSize(file.size)}</span>
+                      )}
+                      <span>{formatDate(file.modified)}</span>
+                    </div>
                   </div>
                 </div>
+                
                 <div className="flex items-center space-x-2">
-                  {!file.isDir && (
+                  {file.type === 'file' && (
                     <button
-                      onClick={() => window.open(`http://localhost:8080/api/v1/files/download?path=${encodeURIComponent(file.path)}`, '_blank')}
-                      className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
-                      title="Download"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle download
+                      }}
+                      className="glass-button p-2 rounded-lg text-blue-400 hover:text-blue-300 transition-all duration-300"
                     >
-                      <Download className="w-4 h-4" />
+                      <Download className="h-4 w-4" />
                     </button>
                   )}
                   <button
-                    onClick={() => handleDelete(file.path)}
-                    className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                    title="Delete"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle delete
+                    }}
+                    className="glass-button p-2 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>

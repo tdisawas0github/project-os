@@ -37,7 +37,7 @@ export const useAuth = () => {
 
   const verifyToken = async (token: string) => {
     try {
-      const response = await axios.get('/api/v1/user', {
+      const response = await axios.get('http://localhost:8080/api/v1/user', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -61,7 +61,7 @@ export const useAuth = () => {
 
   const login = async (username: string, password: string): Promise<void> => {
     try {
-      const response = await axios.post('/api/v1/auth/login', {
+      const response = await axios.post('http://localhost:8080/api/v1/auth/login', {
         username,
         password
       });
@@ -84,7 +84,7 @@ export const useAuth = () => {
     try {
       const token = authState.token;
       if (token) {
-        await axios.post('/api/v1/auth/logout', {}, {
+        await axios.post('http://localhost:8080/api/v1/auth/logout', {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
